@@ -1,0 +1,21 @@
+[package]
+name = "valera_terminator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libc = "*"
+colored = "2.1.0"
+
+[dependencies.windows]
+windows = "0.55.0"
+features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "System",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_GdiPlus"
+]
