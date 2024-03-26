@@ -1,5 +1,5 @@
 use std::{ffi::{self, c_void}, ptr, thread};
-use colored::Colorize;
+// use colored::Colorize;
 use windows::Win32::{self, Graphics::{Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, ReleaseDC, SelectObject, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BITMAPV4HEADER, BI_RGB, CAPTUREBLT, DIB_RGB_COLORS, HBITMAP, HDC, HPALETTE, RGBQUAD, ROP_CODE, SRCCOPY}, GdiPlus::{GdipCreateBitmapFromHBITMAP, GpBitmap}}, UI::{Input::KeyboardAndMouse::*, WindowsAndMessaging::GetDesktopWindow}};
 
 type UINT = libc::c_uint;
@@ -18,12 +18,21 @@ extern "system" {
 }
 
 fn main() {
-    
     let config: ConfigData = parse_arguments();
     println!("delay: {}, size_x: {}, size_y: {}, type: {}", config.delay, config.rect.size.x, config.rect.size.y, config.scan_type.to_string());
 
+    for _ in 0..10 {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        run_script(&config);
+    }
+    
+}
+
+fn run_script(config: &ConfigData)
+{
     unsafe
-    {let desktop_handle = GetDesktopWindow();
+    {
+        let desktop_handle = GetDesktopWindow();
         let h_src = GetDC(desktop_handle);
         let h_dc = CreateCompatibleDC(h_src);
         let h_bitmap = CreateCompatibleBitmap(h_src, config.rect.size.x, config.rect.size.y);
@@ -37,13 +46,15 @@ fn parse_arguments() -> ConfigData
 {
     let args: Vec<_> = std::env::args().collect();
 
-    let mut delay: u64 = 100;
-    let mut size_w: i32 = 6;
+    let mut delay: u64 = 75;
+    let mut size_w: i32 = 8;
     let mut size_h: i32 = 8;
     let mut scan_type = ScanType::Rect;
 
-    let center_x = 1920 / 2;
-    let center_y = 1080 / 2;
+    let center_x = 1680 / 2;
+    let center_y = 1050 / 2;
+
+    
 
     for mut i in 0..args.len() {
         if args[i] == "-d".to_string()
@@ -144,34 +155,33 @@ unsafe fn capture_rect(config: &ConfigData, h_src: HDC, h_dc: HDC, h_bitmap: HBI
     // DeleteObject(h_bitmap);
 }
 
-pub unsafe fn left_click()
+pub unsafe fn space_press()
 {
+    //
     // down left
     let inputs = [ INPUT {
-        r#type: INPUT_MOUSE,
+        r#type: INPUT_KEYBOARD,
         Anonymous: INPUT_0 { 
-            mi: MOUSEINPUT{
-                dx: 0,
-                dy: 0,
-                mouseData: 0,
+            ki: KEYBDINPUT {
+                wVk: VK_LBUTTON,
+                wScan: 0,
+                dwFlags: KEYEVENTF_EXTENDEDKEY,
                 time: 0,
-                dwFlags: MOUSEEVENTF_LEFTDOWN,
                 dwExtraInfo: 0
-            }  
+            }
         }
     },
     // release left
     INPUT {
-        r#type: INPUT_MOUSE,
+        r#type: INPUT_KEYBOARD,
         Anonymous: INPUT_0 { 
-            mi: MOUSEINPUT{
-                dx: 0,
-                dy: 0,
-                mouseData: 0,
+            ki: KEYBDINPUT {
+                wVk: VK_LBUTTON,
+                wScan: 0,
+                dwFlags: KEYEVENTF_KEYUP,
                 time: 0,
-                dwFlags: MOUSEEVENTF_LEFTUP,
                 dwExtraInfo: 0
-            }  
+            }
         }
     }];
     SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
@@ -192,12 +202,13 @@ unsafe fn check_pixels(config: &ConfigData, data: Vec<u8>)
                     {
                         if GetAsyncKeyState(1) < 0
                         {
-                            break;
+                            return;
                         }
-                        left_click();
+                        // left_click();
+                        space_press();
                         std::thread::sleep(std::time::Duration::from_millis(config.delay));
                     }
-                    break;
+                    return;
 				}
 				i += 4;
                 // println!("{}", format!("{} {} {}",  r, g, b).truecolor(r, g, b));
